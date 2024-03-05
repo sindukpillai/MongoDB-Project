@@ -1,0 +1,166 @@
+1. Get the percentage of documents where there are user ids present. Also get the percentage of documents where the user ids are absent.
+  total_docs_count = db.clicks.count_documents({})
+cur = db.clicks.aggregate([
+                
+           {
+        '$match': {'user.UserID': {'$exists': True}}
+    },
+
+            {
+        '$group': {
+            '_id': None,
+            'signed_up': {'$sum': 1}
+        }
+    },
+    {
+        '$project': {
+            'Percentage_signed_up': {'$multiply': [{'$divide': ['$signed_up', total_docs_count]}, 100]},
+            'Percentage_not_signed_up': {'$multiply': [{'$divide': [{'$subtract': [total_docs_count, '$signed_up']}, total_docs_count]}, 100]}
+        }
+    }
+])
+                                                            ]
+                                               
+                }
+            }
+        ],
+        allowDiskUse=True)
+
+for doc in cur:
+    pp.pprint(doc)
+
+
+
+2.What was the most popular product?
+cur = db.clicks.aggregate([
+    
+           {
+        '$group': {
+            '_id': '$ProductID',
+            'Count': {'$sum': 1}
+        }
+    },
+    
+             {
+        '$sort': {'Count': -1}
+    },
+    
+            # Stage 3 - limit the result to return the product with the highest count
+           {
+        '$limit': 1
+    }
+        ])
+
+for doc in cur:
+    pp.pprint(doc)
+
+
+
+3. Count the number of `click` and number of `pageload` for each signed up user. Sort the result in ascending order of the `user.UserID`.
+cur = db.clicks.aggregate([
+           {
+        '$match': {'user.UserID': {'$exists': True}}
+    },
+        ])
+{
+        '$group': {
+            '_id': '$user.UserID',
+            'click_count': {'$sum': {'$cond': [{'$eq': ['$eventType', 'click']}, 1, 0]}},
+            'pageload_count': {'$sum': {'$cond': [{'$eq': ['$eventType', 'pageload']}, 1, 0]}}
+        }
+    },
+    {
+        '$sort': {'_id': 1}
+    }
+])
+
+for doc in cur:
+    pp.pprint(doc)
+
+
+4. Count the number of records per `Country`. Sort the result in descending order of number of records.
+cur = db.clicks.aggregate([
+             {
+        '$group': {
+            '_id': '$user.Country',
+            'count': {'$sum': 1}
+        }
+    },
+{
+        '$sort': {'count': -1}
+    }
+        ])
+
+for doc in cur:
+    pp.pprint(doc)
+
+
+
+5.What is the most common/frequently used `OS`?  
+cur = db.clicks.aggregate([
+    
+            {
+        '$group': {
+            '_id': '$device.OS',
+            'count': {'$sum': 1}
+        }
+    },
+{
+        '$sort': {'count': -1}
+    },
+    {
+        '$limit': 1
+    }
+        ])
+
+for doc in cur:
+    pp.pprint(doc)
+
+
+
+6. And, what is the most common/frequently used `Browser`? 
+
+Also get the count for both.
+cur = db.clicks.aggregate([
+          {
+        '$group': {
+            '_id': '$device.Browser',
+            'count': {'$sum': 1}
+        }
+    },
+ {
+        '$sort': {'count': -1}
+    },
+    {
+        '$limit': 1
+    }
+        ])
+
+for doc in cur:
+    pp.pprint(doc)
+
+
+7. What is most common `OS` and `Browser` combination used by the users? Also get the count for it.
+cur = db.clicks.aggregate([
+    
+           {
+        '$group': {
+            '_id': {'OS': '$device.OS', 'Browser': '$device.Browser'},
+            'count': {'$sum': 1}
+        }
+    },
+  {
+        '$sort': {'count': -1}
+    },
+    {
+        '$limit': 1
+    }
+        ],
+        allowDiskUse=True)
+
+for doc in cur:
+    pp.pprint(doc)
+
+
+
+
